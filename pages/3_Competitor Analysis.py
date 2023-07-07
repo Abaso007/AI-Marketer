@@ -21,7 +21,7 @@ def synonyms(term):
     param: term(str): the term you would like to find
     return: (list): a list of synonyms
     '''
-    response = requests.get('https://www.thesaurus.com/browse/{}'.format(term))
+    response = requests.get(f'https://www.thesaurus.com/browse/{term}')
     soup = BeautifulSoup(response.text, 'html.parser')
     soup.find('section', {'class': 'css-191l5o0-ClassicContentCard e1qo4u830'})
     return [span.text for span in soup.findAll('a', {'class': 'css-1kg1yv8 eh475bn0'})] 
@@ -34,7 +34,7 @@ st.text('')
 st.markdown(':white_check_mark:Xray your competitor and their performance by user feedback')
 st.write('Suggested Data : Competitor Name , Competitor Reviews, Rating(1-5)')
 
-if st.button('Get Demo Data') :
+if st.button('Get Demo Data'):
     dataset = pd.read_csv('./dataset/reviews.csv',encoding= 'unicode_escape')
     st.write(dataset.head(10))
 
@@ -125,33 +125,12 @@ if st.button('Get Demo Data') :
         # standardize the scores for each attribute
         for col in scores.columns:
             scores[col] = (scores[col] - scores[col].mean())/scores[col].std() 
-        
+
         # store to session state variable so everytime when loop the result is stored
 
         scores['company'] = list(scores.index)
         st.session_state['scores'] = scores
         st.session_state['columns'] = tuple(list(scores.columns)[:-1])
-        
-    if 'scores' in st.session_state:
-        ### output
-        st.title('Coordinates of the positioning map')
-        st.dataframe(st.session_state['scores'].iloc[:,:-1])
-        ## user choose x and y axis
-        col_x, col_y = st.columns(2)
-        with col_x:
-            x_axis = st.selectbox("Choose x-axis", st.session_state['columns'])
-        with col_y:
-            y_axis = st.selectbox("Choose y-axis", st.session_state['columns'])            
-        try:        
-            # scattered plot
-            st.title('Positioning Map')
-            fig = px.scatter(st.session_state['scores'], x=x_axis, y=y_axis,width=800,height=800, text='company', size_max=60)
-            fig.update_traces(textposition='top center')
-            st.plotly_chart(fig, use_container_width=False)
-
-        except:
-            pass
-    
 
 else:
 ####################################################################################################################
@@ -190,13 +169,8 @@ else:
             # Can be used wherever a "file-like" object is accepted:
             dataset = pd.read_csv(uploaded_file_competitor,encoding= 'unicode_escape')
             st.write(dataset.head(10))
-        
-        # When clicked analyze button
-        submitted = st.form_submit_button("Analyze")
 
-
-        
-        if submitted:
+        if submitted := st.form_submit_button("Analyze"):
         #Change Button Color by Markdown
             st.markdown(f""" <style>.css-1cpxqw2 {{backgound-color: rgb(78, 116, 255); !important}}</style> """, unsafe_allow_html=True)
             # check user input
@@ -236,12 +210,11 @@ else:
                 for ind, att in enumerate(attributes):
                     try:
                         model.similar_words(keywords=[att], keywords_neg=[], num_words=1)
-                    # if not trained
                     except ValueError as e:
-                        st.write(att, 'has not been trained')      
+                        st.write(att, 'has not been trained')
                         # find other word forms of this word
                         forms = get_word_forms(att)
-                        forms = list(set([i for j in list(forms.values()) for i in j]) - {att})
+                        forms = list({i for j in list(forms.values()) for i in j} - {att})
                         for form in forms:
                             st.write("Trying " + form)
                             try:
@@ -312,42 +285,30 @@ else:
                 # standardize the scores for each attribute
                 for col in scores.columns:
                     scores[col] = (scores[col] - scores[col].mean())/scores[col].std() 
-                
+
                 # store to session state variable so everytime when loop the result is stored
 
                 scores[company] = list(scores.index)
                 st.session_state['scores'] = scores
                 st.session_state['columns'] = tuple(list(scores.columns)[:-1])
-                
-    if 'scores' in st.session_state:
-        ### output
-        st.title('Coordinates of the positioning map')
-        st.dataframe(st.session_state['scores'].iloc[:,:-1])
-        ## user choose x and y axis
-        col_x, col_y = st.columns(2)
-        with col_x:
-            x_axis = st.selectbox("Choose x-axis", st.session_state['columns'])
-        with col_y:
-            y_axis = st.selectbox("Choose y-axis", st.session_state['columns'])            
-        try:        
-            # scattered plot
-            st.title('Positioning Map')
-            fig = px.scatter(st.session_state['scores'], x=x_axis, y=y_axis,width=800,height=800, text='company', size_max=60)
-            fig.update_traces(textposition='top center')
-            st.plotly_chart(fig, use_container_width=False)
-#                @st.cache
-#                def convert_df(df):
-                # IMPORTANT: Cache the conversion to prevent computation on every rerun
-#                     return df.to_csv().encode('utf-8')
 
-#                csv = convert_df(st.session_state['scores'])
+if 'scores' in st.session_state:
+    ### output
+    st.title('Coordinates of the positioning map')
+    st.dataframe(st.session_state['scores'].iloc[:,:-1])
+    ## user choose x and y axis
+    col_x, col_y = st.columns(2)
+    with col_x:
+        x_axis = st.selectbox("Choose x-axis", st.session_state['columns'])
+    with col_y:
+        y_axis = st.selectbox("Choose y-axis", st.session_state['columns'])            
+    try:        
+        # scattered plot
+        st.title('Positioning Map')
+        fig = px.scatter(st.session_state['scores'], x=x_axis, y=y_axis,width=800,height=800, text='company', size_max=60)
+        fig.update_traces(textposition='top center')
+        st.plotly_chart(fig, use_container_width=False)
 
-#                st.download_button(
-#                     label="Download data as CSV",
-#                     data=csv,
-#                     file_name='competitor.csv',
-#                     mime='text/csv',
-#                 )
-        except:
-            pass
+    except:
+        pass
         
